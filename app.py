@@ -31,14 +31,14 @@ with tab1:
                     await pipeline.close()
 
             profile = asyncio.run(run_single())
-            
+
             st.success(f"Verified: {profile.company_name or 'Not Found'}")
-            
+
             col1, col2, col3 = st.columns(3)
             col1.metric("Status", profile.legal_status)
             col2.metric("Confidence", f"{profile.confidence * 100:.0f}%")
             col3.metric("Latency", f"{profile.processing_metadata.execution_time_seconds:.2f}s")
-            
+
             st.subheader("Extracted Attributes")
             details = {
                 "Org Number": profile.organization_number,
@@ -49,7 +49,7 @@ with tab1:
                 "Website": profile.website
             }
             st.json(details)
-            
+
             with st.expander("Audit Trail & Evidence (Traceability)"):
                 st.write([e.model_dump() for e in profile.evidence])
 
@@ -59,24 +59,24 @@ with tab2:
     if uploaded_file and st.button("Run Batch"):
         df = pd.read_csv(uploaded_file)
         orgs = [str(x).strip() for x in df.iloc[:, 0].tolist() if str(x).strip().isdigit()]
-        
+
         st.info(f"Processing {len(orgs)} organizations...")
-        
+
         async def run_batch():
             tracker = ExecutionBudgetTracker(max_requests=500, max_cost_usd=1.0)
             pipeline = ResearchPipeline(tracker, user_agent="SignalpostBatch/1.0")
             sem = asyncio.Semaphore(5)
-            
+
             async def worker(o):
                 async with sem:
                     return await pipeline.research_company(o)
-            
+
             try:
                 tasks = [worker(o) for o in orgs]
                 return await asyncio.gather(*tasks)
             finally:
                 await pipeline.close()
-                
+
         results = asyncio.run(run_batch())
         records = [
             {
