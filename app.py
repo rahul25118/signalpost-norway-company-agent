@@ -1,3 +1,9 @@
+import os
+import sys
+
+# src डायरेक्टरी को पाथ में जोड़ना
+sys.path.insert(0, os.path.abspath("src"))
+
 import streamlit as st
 import asyncio
 import pandas as pd
@@ -45,7 +51,7 @@ with tab1:
             st.json(details)
             
             with st.expander("Audit Trail & Evidence (Traceability)"):
-                st.write(profile.evidence)
+                st.write([e.model_dump() for e in profile.evidence])
 
 with tab2:
     st.markdown("Upload a CSV with an `org_nr` column to run concurrent batch processing.")
